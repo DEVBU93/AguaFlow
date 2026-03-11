@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id          String     @id @default(uuid())
+  name        String
+  domain      String?
+  industry    String?
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  analyses    Analysis[]
+
+  @@map("companies")
+}
+
+model Analysis {
+  id              String    @id @default(uuid())
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id])
+  
+  // AGUA FLOW 6 dimensions
+  agilityScore    Float     @default(0)  // A - Agilidad
+  growthScore     Float     @default(0)  // G - Crecimiento
+  unityScore      Float     @default(0)  // U - Unidad
+  adaptScore      Float     @default(0)  // A - Adaptabilidad
+  flowScore       Float     @default(0)  // F - Flujo
+  overallScore    Float     @default(0)  // Overall AGUA FLOW score
+  
+  rawData         Json      @default("{}")
+  recommendations Json      @default("[]")
+  status          String    @default("PENDING") // PENDING | ANALYZING | COMPLETE | ERROR
+  
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+  connectorData   ConnectorData[]
+
+  @@map("analyses")
+}
+
+model ConnectorData {
+  id           String   @id @default(uuid())
+  analysisId   String
+  analysis     Analysis @relation(fields: [analysisId], references: [id])
+  connector    String   // github | notion | linear | slack | jira | gmail | asana
+  data         Json     @default("{}")
+  fetchedAt    DateTime @default(now())
+  status       String   @default("OK") // OK | ERROR | PARTIAL
+
+  @@map("connector_data")
+}
